@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 const OwnerLoginPage = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const { login, logout } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const onChange = (e) =>
@@ -16,15 +16,9 @@ const OwnerLoginPage = () => {
     e.preventDefault();
     setError("");
     try {
-      const res = await axios.post("/api/auth/login", formData);
-      if (res.data.role === "Store Owner") {
-        login(res.data);
-        navigate("/owner/dashboard");
-      } else {
-        setError("Access Denied: Not a Store Owner account.");
-        login(res.data);
-        logout();
-      }
+      const res = await axios.post("/api/auth/login/owner", formData);
+      login(res.data);
+      navigate("/owner/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "An error occurred");
     }

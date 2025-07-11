@@ -50,6 +50,8 @@ const registerUser = (req, res) => {
   );
 };
 
+
+
 // @desc    Register a new admin
 // @route   POST /api/auth/register/admin
 // @access  Public (should be protected in production)
@@ -74,16 +76,16 @@ const registerAdmin = (req, res) => {
       const adminId = uuidv4();
 
       db.query(
-        "INSERT INTO admin (id, name, email, password, address) VALUES (?, ?, ?, ?, ?)",
-        [adminId, name, email, hashedPassword, address],
+        "INSERT INTO admin (name, email, password, address) VALUES (?, ?, ?, ?)",
+        [name, email, hashedPassword, address],
         (err, result) => {
           if (err) throw err;
           res.status(201).json({
-            id: adminId,
+            id: result.insertId, // this is the AUTO_INCREMENT id
             name,
             email,
-            role: "admin",
-            token: generateToken(adminId, "admin"),
+            address,
+            token: generateToken(result.insertId),
           });
         }
       );
@@ -95,47 +97,11 @@ const registerAdmin = (req, res) => {
 // @route   POST /api/auth/register/owner
 // @access  Public
 const registerOwner = (req, res) => {
-  const { name, email, password, address } = req.body;
-
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: "Please add all fields" });
-  }
-
-  db.query(
-    "SELECT email FROM owner WHERE email = ?",
-    [email],
-    (err, results) => {
-      if (err) throw err;
-      if (results.length > 0) {
-        return res.status(400).json({ message: "Owner already exists" });
-      }
-
-      const salt = bcrypt.genSaltSync(10);
-      const hashedPassword = bcrypt.hashSync(password, salt);
-      const ownerId = uuidv4();
-
-      db.query(
-        "INSERT INTO owner (id, name, email, password, address) VALUES (?, ?, ?, ?, ?)",
-        [ownerId, name, email, hashedPassword, address],
-        (err, result) => {
-          if (err) throw err;
-          res.status(201).json({
-            id: ownerId,
-            name,
-            email,
-            role: "Store Owner",
-            token: generateToken(ownerId, "Store Owner"),
-          });
-        }
-      );
-    }
-  );
+  registerWithRole(req, res, "Store Owner");
 };
 
-// @desc    Authenticate a user
-// @route   POST /api/auth/login
-// @access  Public
-const loginUser = (req, res) => {
+// Generic login function
+const loginWithRole = (req, res, role, tableName) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -144,28 +110,53 @@ const loginUser = (req, res) => {
       .json({ message: "Please provide email and password" });
   }
 
-  db.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
-    if (err) throw err;
+  db.query(
+    `SELECT * FROM ${tableName} WHERE email = ?`,
+    [email],
+    (err, results) => {
+      if (err) throw err;
 
-    if (results.length === 0) {
-      return res.status(404).json({ message: "User not found" });
+      if (results.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const user = results[0];
+      const isMatch = bcrypt.compareSync(password, user.password_hash);
+
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      res.json({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: role,
+        token: generateToken(user.id, role),
+      });
     }
+  );
+};
 
-    const user = results[0];
-    const isMatch = bcrypt.compareSync(password, user.password_hash);
+// @desc    Authenticate a user
+// @route   POST /api/auth/login
+// @access  Public
+const loginUser = (req, res) => {
+  loginWithRole(req, res, "user", "users");
+};
 
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+// @desc    Authenticate an admin
+// @route   POST /api/auth/login/admin
+// @access  Public
+const loginAdmin = (req, res) => {
+  loginWithRole(req, res, "admin");
+};
 
-    res.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user.id, user.role),
-    });
-  });
+// @desc    Authenticate a store owner
+// @route   POST /api/auth/login/owner
+// @access  Public
+const loginOwner = (req, res) => {
+  loginWithRole(req, res, "Store Owner", "owners");
 };
 
 // @desc    Update user password
@@ -218,4 +209,6 @@ module.exports = {
   updatePassword,
   registerAdmin,
   registerOwner,
+  loginAdmin,
+  loginOwner,
 };

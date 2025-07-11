@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 const AdminLoginPage = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const { login, logout } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const onChange = (e) =>
@@ -16,16 +16,10 @@ const AdminLoginPage = () => {
     e.preventDefault();
     setError("");
     try {
-      const res = await axios.post("/api/auth/login", formData);
-      if (res.data.role === "admin") {
-        login(res.data);
-        navigate("/admin/dashboard");
-      } else {
-        setError("Access Denied: Not an administrator account.");
-        // Log them in and out quickly to clear any previous state
-        login(res.data);
-        logout();
-      }
+      const res = await axios.post("/api/auth/login/admin", formData);
+      login(res.data);
+      navigate("/admin/dashboard");
+      console.log("data", res.data);
     } catch (err) {
       setError(err.response?.data?.message || "An error occurred");
     }

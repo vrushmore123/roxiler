@@ -9,7 +9,7 @@ const LoginPage = () => {
     password: "",
   });
   const [error, setError] = useState("");
-  const { login, logout } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const { email, password } = formData;
@@ -22,16 +22,8 @@ const LoginPage = () => {
     setError("");
     try {
       const res = await axios.post("/api/auth/login", formData);
-      if (res.data.role === "user") {
-        login(res.data);
-        navigate("/");
-      } else {
-        setError(
-          "Invalid account type. Please use the appropriate login page."
-        );
-        login(res.data);
-        logout();
-      }
+      login(res.data);
+      navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "An error occurred");
     }
