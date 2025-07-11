@@ -13,6 +13,7 @@ router.use(protect, authorize("admin"));
 
 router.get("/stats", getDashboardStats);
 router.route("/users").post(createUser).get(getUsers);
+
 router.get("/store-owners", getStoreOwners);
 
 module.exports = router;

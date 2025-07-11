@@ -68,7 +68,9 @@ const createStore = (req, res) => {
 // ✅ GET owned store details with ratings for logged-in owner
 // @route   GET /api/stores/mystore
 const getOwnedStoreDetails = (req, res) => {
-  const ownerId = req.user.id; // ✅ Your auth middleware must set req.user!
+  console.log("In getOwnedStoreDetails, req.user:", req.user);
+
+  const ownerId = req.user.id; // ✅ Must be defined by protect
 
   const storeSql = "SELECT * FROM stores WHERE owner_id = ?";
   db.query(storeSql, [ownerId], (err, stores) => {
