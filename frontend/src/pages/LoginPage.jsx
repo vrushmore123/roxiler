@@ -23,7 +23,7 @@ const LoginPage = () => {
     try {
       const res = await axios.post("/api/auth/login", formData);
       login(res.data);
-      navigate("/");
+      navigate("/user/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "An error occurred");
     }

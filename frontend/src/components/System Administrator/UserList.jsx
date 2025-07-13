@@ -9,21 +9,33 @@ const UserList = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        // ✅ fallback: get token from localStorage if needed
+        const token = user?.token || localStorage.getItem("token");
+
+        if (!token) {
+          console.error("No token found. User is not authenticated.");
+          return;
+        }
+
         const config = {
           headers: {
-            Authorization: `Bearer ${user.token}`,
+            Authorization: `Bearer ${token}`,
           },
         };
-        const { data } = await axios.get("/api/admin/users", config);
+
+        // ✅ Use correct backend server URL if needed
+        const { data } = await axios.get(
+          "http://localhost:5000/api/admin/users",
+          config
+        );
+
         setUsers(data);
       } catch (error) {
         console.error("Failed to fetch users", error);
       }
     };
 
-    if (user?.token) {
-      fetchUsers();
-    }
+    fetchUsers();
   }, [user]);
 
   return (
@@ -46,7 +58,7 @@ const UserList = () => {
               <td className="p-3">{u.name}</td>
               <td className="p-3">{u.email}</td>
               <td className="p-3">{u.address || "N/A"}</td>
-              <td className="p-3">{u.role}</td>
+              <td className="p-3">{u.role || "N/A"}</td>
             </tr>
           ))}
         </tbody>

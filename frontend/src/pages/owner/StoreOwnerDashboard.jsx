@@ -11,56 +11,44 @@ const StoreOwnerDashboard = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    // --- Using dummy data for display purposes ---
-    const dummyData = {
-      store: {
-        id: 1,
-        name: "My Awesome Store",
-        email: "contact@awesomestore.com",
-        address: "123 Fantasy Lane, Dreamville",
-      },
-      averageRating: 4.75,
-      raters: [
-        { name: "Alice Johnson", email: "alice@example.com", rating: 5 },
-        { name: "Bob Williams", email: "bob@example.com", rating: 4 },
-        { name: "Charlie Brown", email: "charlie@example.com", rating: 5 },
-      ],
-    };
-    setDashboardData(dummyData);
-    setLoading(false);
-    // --- End of dummy data section ---
-
-    /*
-    // Original API call is commented out to show dummy data
     const fetchDashboardData = async () => {
       setLoading(true);
+      setError("");
+
       try {
+        // ✅ IMPORTANT: must have token
+        if (!user?.token) {
+          setError("Authentication token missing. Please log in again.");
+          setLoading(false);
+          return;
+        }
+
         const config = {
           headers: {
             Authorization: `Bearer ${user.token}`,
           },
         };
+
         const { data } = await axios.get("/api/stores/mystore", config);
         setDashboardData(data);
       } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+
         if (err.response && err.response.status === 404) {
           setError(
             "You have not been assigned to a store. Please contact an administrator."
           );
+        } else if (err.response && err.response.data?.message) {
+          setError(err.response.data.message);
         } else {
-          setError(
-            err.response?.data?.message || "Failed to fetch dashboard data."
-          );
+          setError("Failed to fetch dashboard data.");
         }
       } finally {
         setLoading(false);
       }
     };
 
-    if (user?.token) {
-      fetchDashboardData();
-    }
-    */
+    fetchDashboardData();
   }, [user]);
 
   if (loading) {
@@ -80,7 +68,7 @@ const StoreOwnerDashboard = () => {
   const { store, averageRating, raters } = dashboardData;
 
   return (
-    <div>
+    <div className="p-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">{store.name} - Dashboard</h1>
         <button
@@ -102,7 +90,7 @@ const StoreOwnerDashboard = () => {
 
       <div>
         <h2 className="text-3xl font-bold mb-6">Users Who Rated Your Store</h2>
-        <div className="bg-gray-800 p-4 rounded-lg">
+        <div className="bg-gray-800 p-4 rounded-lg overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-gray-700">

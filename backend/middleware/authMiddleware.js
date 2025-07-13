@@ -21,7 +21,7 @@ const protect = (req, res, next) => {
       // ✅ Determine correct table
       let tableName;
       if (decoded.role === "admin") {
-        tableName = "admins";
+        tableName = "admin";
       } else if (decoded.role === "Store Owner") {
         tableName = "owner"; // ✅ FIXED: matches your actual table name
       } else {
